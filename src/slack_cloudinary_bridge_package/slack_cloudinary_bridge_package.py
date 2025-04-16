@@ -9,6 +9,7 @@ import cloudinary.uploader
 
 mcp = FastMCP("Slack-Cloudinary-Bridge")
 
+@mcp.tool()
 async def download_slack_image(slack_url: str) -> bytes:
     """
     Downloads an image from a Slack private URL using the bot token from env vars.
@@ -34,6 +35,7 @@ async def download_slack_image(slack_url: str) -> bytes:
     response.raise_for_status() # Raises exceptions for 4xx/5xx responses
     return response.content
 
+@mcp.tool()
 async def upload_to_cloudinary(image_bytes: bytes) -> str:
     """
     Uploads image bytes to Cloudinary using credentials from env vars and returns the public URL.
