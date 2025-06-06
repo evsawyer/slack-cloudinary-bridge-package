@@ -32,7 +32,7 @@ async def download_slack_image(slack_url: str) -> bytes:
     
     if not slack_token:
         logger.error("BOT_TOKEN environment variable not set")
-        return b""
+        return "Failed to download image from Slack"
         
     headers = {
         "Authorization": f"Bearer {slack_token}"
@@ -44,7 +44,7 @@ async def download_slack_image(slack_url: str) -> bytes:
         return response.content
     except requests.RequestException as e:
         logger.error(f"Failed to download image: {e}")
-        return b""
+        return "Failed to download image from Slack"
 
 @mcp.tool()
 async def upload_to_cloudinary(image_bytes: bytes) -> str:
@@ -72,7 +72,7 @@ async def upload_to_cloudinary(image_bytes: bytes) -> str:
         if not api_secret: missing.append("CLOUDINARY_API_SECRET")
         if not cloud_name: missing.append("CLOUDINARY_CLOUD_NAME")
         logger.error(f"Missing Cloudinary credentials: {', '.join(missing)}")
-        return ""
+        return "Missing required environment variables"
 
     # Note: Consider configuring Cloudinary once globally instead of per-call if possible.
     try:
@@ -87,14 +87,14 @@ async def upload_to_cloudinary(image_bytes: bytes) -> str:
         result = cloudinary.uploader.upload(image_bytes)
         if not result or "secure_url" not in result:
             logger.error(f"Cloudinary upload failed or missing secure_url. Result: {result}")
-            return ""
+            return "Failed to upload image to Cloudinary"
             
         logger.info(f"Successfully uploaded to Cloudinary. URL: {result['secure_url']}")
         return result["secure_url"]
         
     except Exception as e:
         logger.error(f"Error during Cloudinary upload: {e}")
-        return ""
+        return "Failed to upload image to Cloudinary"
 
 # Helper function to check for required environment variables
 def check_env_vars(*vars):
