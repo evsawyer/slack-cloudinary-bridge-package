@@ -121,36 +121,20 @@ async def upload_slack_image(slack_url: str) -> str:
     
     env_error = check_env_vars("BOT_TOKEN", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET", "CLOUDINARY_CLOUD_NAME")
     if env_error:
-        logger.error(env_error)
         return env_error
 
     try:
-        # Download the image asynchronously (but internally uses sync requests)
         image_bytes = await download_slack_image(slack_url)
-        # The helper now raises ValueError if token is missing, 
-        # but the check above provides a better initial message.
-        # We might catch exceptions from download_slack_image more specifically if needed.
-        
-        # Upload the image asynchronously (but internally uses sync cloudinary)
+        if not image_bytes:
+            return "Failed to download image from Slack"
+            
         public_url = await upload_to_cloudinary(image_bytes)
-        # The helper now raises ValueError/RuntimeError if config/upload fails.
+        if not public_url:
+            return "Failed to upload image to Cloudinary"
 
-        logger.info("Successfully transferred image from Slack to Cloudinary")
         return public_url
         
-    except ValueError as e:
-        # Catch errors from missing env vars within helpers (redundant but safe)
-        # Or other ValueErrors raised by the helpers
-        # return f"Configuration Error: {e}"
-        pass
-    except RuntimeError as e:
-        # Catch upload errors from cloudinary_helper
-        # return f"Upload Error: {e}"
-        pass
     except Exception as e:
-        # Catch other potential exceptions (e.g., network errors from requests)
-        # Log the full error for debugging in a real app
-        # print(f"An unexpected error occurred: {e}") 
         logger.error(f"Unexpected error during transfer: {e}")
         return f"An unexpected error occurred: {str(e)}"
 
